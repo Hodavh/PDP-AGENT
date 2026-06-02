@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: pw-pdp-agent
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PLAYWRIGHT_BROWSERS_PATH
+        value: /root/.cache/ms-playwright

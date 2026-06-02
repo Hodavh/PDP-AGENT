@@ -1,0 +1,13 @@
+langsmith
+tavily-python
+firecrawl-py
+requests
+playwright
+python-dotenv
+rich
+jinja2
+fastapi
+uvicorn[standard]
+python-multipart
+langchain-google-genai
+anthropic

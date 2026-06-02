@@ -1,0 +1,140 @@
+You are rewriting a Protein Works product page.
+Your output must be commercially sharp, not safe and bland.
+A marketer should be able to read this and think
+"yes, this is better" — not "this is too cautious to use."
+
+═══════════════════════════════════════════════
+WHAT THE AUDIT FOUND — ADDRESS THESE DIRECTLY
+═══════════════════════════════════════════════
+
+The audit identified these priority issues.
+Your rewrite must fix each one:
+
+{% for rec in top_recs %}
+PRIORITY {{ loop.index }} ({{ rec.dimension }}):
+  Recommendation: {{ rec.text }}
+{% endfor %}
+
+Top compliance flags — these sentences need replacing with compliant alternatives:
+{% for flag in compliance_flags %}
+- "{{ flag.verbatim_quote }}" ({{ flag.risk_level }})
+{% endfor %}
+
+{% if not compliance_flags %}
+No compliance flags identified in scraped content.
+{% endif %}
+
+═══════════════════════════════════════════════
+ORIGINAL PAGE CONTENT
+═══════════════════════════════════════════════
+
+{{ target_json }}
+
+═══════════════════════════════════════════════
+REWRITE INSTRUCTIONS
+═══════════════════════════════════════════════
+
+VOICE: Direct, energetic, credible.
+Not corporate. Not cautious. Not "wellness-speak."
+Write like a confident brand that knows its product works.
+
+META TITLE (50-60 chars):
+- Primary keyword first
+- Brand name after pipe
+- Must reflect what the product actually does
+- Example structure: "Keyword Descriptor | Protein Works"
+
+H1 (max 8 words):
+- Lead with customer outcome not product name
+- The visitor must understand the product in 3 seconds
+- No health claims
+- Bad: "All In A.I. Greens Superfood Formula"
+- Good: "The Greens Powder You'll Actually Drink Daily"
+
+SUB-HEADLINE (max 20 words):
+- Answer the single biggest purchase objection immediately
+- For this product that objection is TASTE
+- Reference specific review evidence about taste if available
+- Do not make efficacy claims
+
+BENEFIT HIGHLIGHTS (5-7 bullets):
+- Lead with outcome the customer cares about
+- Follow with the ingredient that delivers it
+- End with the authorised claim in plain language
+- Format: [Outcome] — [Ingredient] — [Authorised claim]
+- Bad: "Supports immunity with Vitamin C"
+- Good: "Stay sharp through winter — Vitamin C and Zinc contribute to the normal function of your immune system"
+- Every compliance-sensitive bullet ends with [HUMAN REVIEW REQUIRED]
+
+FAQ — OBJECTION HANDLING (3-5 Q&A pairs):
+Address these specific objections in this order:
+1. "Does it actually taste good?"
+   Use ONLY review snippets verbatim from the page data. If no taste reviews exist, skip this Q.
+2. "Is the price worth it vs cheaper alternatives?"
+   Focus on ingredient quality, formulation depth, and brand credibility — NOT the price itself.
+   Do NOT mention or quote the price. Do NOT compare prices to competitors.
+   Use ONLY ingredient names and quality points that appear in the scraped data.
+   DO NOT invent or calculate: gram amounts, serving counts, price-per-serving, bag weights,
+   or any number not explicitly stated in the source.
+3. "Will I actually notice a difference?"
+   Use authorised claims only — no efficacy promises
+4. "Can I cancel if I subscribe?"
+   Only include if subscription data is in the page data
+
+TRUST SIGNAL BLOCK (2-3 sentences):
+- Use ONLY claims verifiable from the page data
+- Do not invent review counts, certifications, or awards not in the scraped data
+- If award badges are in image_descriptions — use them
+- If review count is in the data — use it
+- Format: specific claim + specific evidence
+
+═══════════════════════════════════════════════
+ANTI-HALLUCINATION RULES — NON-NEGOTIABLE
+═══════════════════════════════════════════════
+
+NEVER invent or calculate specific numbers. This includes:
+- The product price (e.g. "£50", "£39.99") — only use the exact price from the source data
+- Weight or volume amounts (e.g. "15g", "960g", "500ml")
+- Serving counts (e.g. "64 servings", "30 servings")
+- Derived prices (e.g. "£0.46 per serving" — only use if price_per_serving is in the data)
+- Specific nutrient doses (e.g. "1000mg Vitamin C") unless stated verbatim in the source
+- Ingredient counts (e.g. "69 ingredients") unless stated verbatim in the source
+- Percentages, rankings, or statistics not present in the scraped content
+
+If a specific number is not in the source JSON, DO NOT write it. Either omit the detail or
+write [DATA UNVERIFIED — check source] in its place.
+
+═══════════════════════════════════════════════
+COMPLIANCE RULES — NON-NEGOTIABLE
+═══════════════════════════════════════════════
+
+{{ compliance_rules }}
+
+Every sentence containing health or efficacy language MUST end with [HUMAN REVIEW REQUIRED].
+
+You may NOT add claims not already present in the original page data.
+If you need a claim that is not in the data, write [ASSUMPTION — verify before publishing].
+
+═══════════════════════════════════════════════
+OUTPUT FORMAT — return valid JSON only
+═══════════════════════════════════════════════
+
+CRITICAL: You MUST complete the entire JSON object. Do not stop mid-string or mid-array.
+Keep benefit_highlights to max 5 bullets and faq_objection_handling to max 3 Q&A pairs
+to ensure the JSON fits within the output limit.
+
+{
+  "meta_title": "...",
+  "h1": "...",
+  "sub_headline": "...",
+  "benefit_highlights": [
+    "outcome — ingredient — claim [HUMAN REVIEW REQUIRED]"
+  ],
+  "faq_objection_handling": [
+    {"q": "...", "a": "..."}
+  ],
+  "trust_signal_block": "...",
+  "rewrite_summary": "1-2 sentences only.",
+  "assumptions_flagged": ["..."],
+  "compliance_review_required": ["..."]
+}

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PW PDP Optimisation Agent</title>
+  <link rel="icon" type="image/png" href="/static/pw.png" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="/static/pw.png" alt="Protein Works" class="logo-img" />
+        <div>
+          <div class="logo-title">PDP Agent</div>
+          <div class="logo-sub">Protein Works</div>
+        </div>
+      </div>
+
+      <button class="btn-new" onclick="showNewAudit()">+ New Audit</button>
+      <button class="btn-guide" onclick="showPanel('guide')">How It Works</button>
+
+      <div class="sidebar-section-label">Recent Audits</div>
+      <div id="audit-list" class="audit-list">
+        <div class="audit-list-empty">No audits yet</div>
+      </div>
+
+      <!-- Bottom nav -->
+      <div class="sidebar-bottom-nav">
+        <div class="sidebar-section-label" style="margin-bottom:8px">Tools</div>
+
+        <button class="btn-trace-agent" onclick="openTraceAgent()">
+          <span class="trace-agent-icon">LS</span>
+          Observability Dashboard
+          <span id="trace-agent-run-count" class="trace-agent-badge">—</span>
+        </button>
+
+        <button class="btn-trace-agent btn-impact" onclick="showPanel('impact');initBusinessImpact()">
+          <span class="impact-icon-sm">📈</span>
+          Business Impact
+          <span class="impact-sample-badge-sm">Sample</span>
+        </button>
+
+        <button class="btn-trace-agent" onclick="showPanel('architecture')">
+          <span style="font-size:13px">🏗</span>
+          System Architecture
+        </button>
+
+        <button class="btn-trace-agent" onclick="showPanel('roadmap')">
+          <span style="font-size:13px">🗺</span>
+          30-Day Roadmap
+        </button>
+
+        <a href="https://github.com/Hodavh/PDP-AGENT" target="_blank" rel="noopener noreferrer" class="btn-trace-agent" style="text-decoration:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          Download Code
+        </a>
+      </div>
+
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- New audit panel -->
+      <div id="panel-new" class="panel panel-new active">
+        <div class="panel-new-inner">
+          <h1 class="panel-title">Audit a Product Page</h1>
+          <p class="panel-subtitle">Enter any Protein Works URL to get a scored audit, competitor benchmark, compliance check, and full page rewrite.</p>
+          <div class="url-form">
+            <input id="url-input" type="url" placeholder="https://www.theproteinworks.com/ai-greens" class="url-input" />
+            <button class="btn-run" onclick="startAudit()">Run Audit</button>
+          </div>
+          <div id="url-error" class="url-error hidden">Please enter a valid URL.</div>
+        </div>
+      </div>
+
+      <!-- Progress panel -->
+      <div id="panel-progress" class="panel panel-progress">
+        <div class="progress-inner">
+          <div class="progress-icon">⚙</div>
+          <h2 id="progress-title" class="progress-title">Auditing page...</h2>
+          <p id="progress-url" class="progress-url"></p>
+          <div class="progress-bar-track"><div id="progress-bar" class="progress-bar-fill"></div></div>
+          <p id="progress-stage" class="progress-stage">Starting...</p>
+        </div>
+      </div>
+
+      <!-- Guide panel -->
+      <div id="panel-guide" class="panel panel-guide">
+        <div class="guide-inner">
+          <div class="guide-header">
+            <h1 class="panel-title">How the Audit Works</h1>
+            <p class="guide-intro">Each product page is scored across <strong>9 dimensions</strong> using a Reflexion loop — an Actor LLM produces the audit, an Evaluator checks it against 4 quality criteria, and a Reflector generates a targeted critique if any criteria fail. A second pass corrects the output before the Rewriter produces the page copy. All dimensions are evaluated against absolute best-practice standards from Baymard Institute, NNG, CXL, ASA CAP Code, and MHRA guidance.</p>
+          </div>
+          <div id="guide-dimensions" class="guide-dimensions"></div>
+        </div>
+      </div>
+
+      <!-- Results panel -->
+      <div id="panel-results" class="panel panel-results">
+        <div class="results-header">
+          <div>
+            <div class="res-name-row">
+              <div id="res-product-name" class="res-product-name"></div>
+              <a id="res-link" href="#" target="_blank" rel="noopener" class="res-link-btn">↗ Visit page</a>
+            </div>
+            <div id="res-meta" class="res-meta"></div>
+          </div>
+          <div class="res-score-badge">
+            <div id="res-score" class="res-score-num">—</div>
+            <div class="res-score-label">Overall</div>
+          </div>
+        </div>
+
+        <!-- ATF screenshot + Radar chart side by side -->
+        <section class="section section-atf-radar">
+          <div class="atf-radar-row">
+            <div class="atf-radar-screenshot" id="section-atf" style="display:none">
+              <h2 class="section-title">Mobile Above-the-Fold View</h2>
+              <div class="atf-frame-wrap">
+                <div class="atf-phone-frame">
+                  <div class="atf-phone-notch"></div>
+                  <img id="atf-screenshot-img" class="atf-screenshot" src="" alt="Above the fold mobile screenshot" />
+                </div>
+                <p class="atf-caption">390×844px · iPhone viewport · no scroll</p>
+              </div>
+            </div>
+            <div class="atf-radar-chart">
+              <h2 class="section-title">Score Overview</h2>
+              <div class="chart-wrap">
+                <canvas id="radar-chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Scores grid -->
+        <section class="section">
+          <h2 class="section-title">Dimension Scores</h2>
+          <div id="scores-grid" class="scores-grid"></div>
+        </section>
+
+        <!-- Recommendations table -->
+        <section class="section">
+          <h2 class="section-title">Recommendations</h2>
+          <table class="recs-table">
+            <thead>
+              <tr>
+                <th class="recs-th">#</th>
+                <th class="recs-th">Dimension</th>
+                <th class="recs-th">Recommendation</th>
+                <th class="recs-th">Impact</th>
+                <th class="recs-th">Effort</th>
+              </tr>
+            </thead>
+            <tbody id="top-recs"></tbody>
+            <tfoot>
+              <tr id="recs-show-all-row" style="display:none">
+                <td colspan="5" class="recs-show-all-cell">
+                  <button id="recs-show-all-btn" class="recs-show-all-btn" onclick="toggleAllRecs()"></button>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </section>
+
+
+        <!-- Rewrite -->
+        <section class="section">
+          <h2 class="section-title">Suggested Rewrite <span class="draft-badge">DRAFT — Do Not Publish</span></h2>
+          <div id="rewrite-body" class="rewrite-body"></div>
+        </section>
+
+      </div>
+
+      <!-- 30-Day Roadmap panel -->
+      <div id="panel-roadmap" class="panel panel-roadmap">
+        <iframe src="/static/roadmap_30days.html" class="roadmap-frame" title="30-Day Roadmap"></iframe>
+      </div>
+
+      <!-- System Architecture panel -->
+      <div id="panel-architecture" class="panel panel-architecture">
+        <div class="arch-inner">
+
+          <div class="arch-header">
+            <h2 class="arch-title">System Architecture</h2>
+            <p class="arch-subtitle">End-to-end design of the PW PDP Optimisation Agent</p>
+          </div>
+
+          <!-- Diagram -->
+          <div class="arch-diagram-wrap">
+            <img src="/static/architecture v1.png" alt="System Architecture Diagram" class="arch-diagram" />
+          </div>
+
+          <!-- Description -->
+          <div class="arch-description">
+
+            <div class="arch-section">
+              <h3 class="arch-section-title">Request Flow</h3>
+              <p class="arch-section-body">A user submits a product page URL from the browser. The FastAPI backend immediately returns a <code>run_id</code> and spawns a daemon thread so the pipeline never blocks the server event loop. The browser polls <code>GET /api/audit/:id/status</code> every second, receiving the current stage name, until the run reaches <code>complete</code> or <code>error</code>. The full result is fetched in a single call and rendered in the dashboard. On completion the LangSmith metrics cache is automatically invalidated so the Observability Dashboard reflects the new run immediately.</p>
+            </div>
+
+            <div class="arch-section">
+              <h3 class="arch-section-title">Stage 1 — Scraping</h3>
+              <p class="arch-section-body">Firecrawl renders the page in a headless browser and extracts ~25 structured fields via an LLM-backed schema: product name, H1, meta title, price, per-serving cost, benefits, ingredients, reviews, trust signals, compliance-sensitive sentences, and FAQ items. A post-processing guard detects when the scraper returns the meta title in the H1 field (a common CDN-rendered page artefact) and corrects the split automatically. A 390×844 px above-the-fold screenshot is captured and the first three product images are fetched with browser-like headers (including <code>Referer</code>) and base64-encoded for direct injection into the LLM prompt. Tavily performs a site-specific search as fallback if Firecrawl fails or returns empty content.</p>
+            </div>
+
+            <div class="arch-section">
+              <h3 class="arch-section-title">Stage 2 — Reflexion Audit Loop (concurrent)</h3>
+              <p class="arch-section-body">The audit runs as a Reflexion loop via <strong>LangChain's <code>ChatGoogleGenerativeAI</code></strong> (Gemini 2.5 Flash), enabling automatic token reporting to LangSmith. The <strong>Actor</strong> receives the full page data, images, and a ~2,000-token rubric across 9 conversion-critical dimensions, producing a structured JSON audit with per-dimension scores (1–5), element-level pass/fail checks, compliance flags, and ranked recommendations sorted by impact then effort. The <strong>Evaluator</strong> (also Gemini 2.5 Flash) checks every recommendation against four binary criteria: grounded in page evidence, specific to this PDP, compliant language, and justified impact score — including a special guard against ATF visibility checks that quote structured data instead of the screenshot. If any compliance criterion fails or more than three criteria fail, the pure-Python <strong>Reflector</strong> generates targeted critique messages (no LLM call) and the Actor runs a corrective second pass. The <strong>Rewriter</strong> (<strong>Claude Sonnet 4.6</strong> via Anthropic SDK) starts concurrently with the reflexion loop as soon as Pass 1 completes, running in a separate thread via a <code>threading.Event</code> signal — saving 30–120 s on single-pass audits.</p>
+            </div>
+
+            <div class="arch-section">
+              <h3 class="arch-section-title">Stage 3 — Rewrite (Claude Sonnet 4.6)</h3>
+              <p class="arch-section-body">Claude Sonnet 4.6 generates a full page rewrite: meta title, H1, sub-headline, benefit highlights, objection-handling FAQ, and trust signal block. The system prompt injects concrete Protein Works brand voice examples (short sentences, scepticism acknowledgement, specific numbers) alongside the GB NHC Register permitted claims list and prohibited language patterns. The anti-hallucination rules explicitly forbid inventing gram amounts, serving counts, or derived prices not present verbatim in the scraped data. Every compliance-sensitive sentence is automatically flagged <code>[HUMAN REVIEW REQUIRED]</code>. If Pass 2 was triggered, the rewriter re-runs with the corrected audit.</p>
+            </div>
+
+            <div class="arch-section">
+              <h3 class="arch-section-title">Token Tracking &amp; Observability</h3>
+              <p class="arch-section-body">Every pipeline run is traced end-to-end in LangSmith via <code>@traceable</code> decorators: <code>reflexion_loop → actor_audit → evaluator</code>, with the rewriter as a sibling span. Because the pipeline uses <code>ThreadPoolExecutor</code>, each worker thread calls <code>set_current_run(run_id)</code> at start so a thread-local accumulator (<code>utils/token_store.py</code>) captures Gemini and Claude token counts separately and stores them in <code>scores_json._tokens</code> in SQLite on completion. The Observability Dashboard reads token trends from SQLite (not LangSmith) for accuracy. LangSmith endpoints use per-key TTL caches (embed-url: 1 h, metrics: 5 min, recent-runs: 2 min), pre-warmed in parallel threads 4 s after server startup.</p>
+            </div>
+
+            <div class="arch-flow-row">
+              <div class="arch-flow-step">
+                <div class="arch-flow-icon">🌐</div>
+                <div class="arch-flow-label">Browser SPA</div>
+                <div class="arch-flow-meta">Vanilla JS · Chart.js · No build step</div>
+              </div>
+              <div class="arch-flow-arrow">→</div>
+              <div class="arch-flow-step">
+                <div class="arch-flow-icon">⚡</div>
+                <div class="arch-flow-label">FastAPI</div>
+                <div class="arch-flow-meta">REST API · Daemon threads · Per-key TTL cache</div>
+              </div>
+              <div class="arch-flow-arrow">→</div>
+              <div class="arch-flow-step">
+                <div class="arch-flow-icon">🔍</div>
+                <div class="arch-flow-label">Scraper</div>
+                <div class="arch-flow-meta">Firecrawl + Tavily · ATF screenshot · CDN images</div>
+              </div>
+              <div class="arch-flow-arrow">→</div>
+              <div class="arch-flow-step">
+                <div class="arch-flow-icon">🤖</div>
+                <div class="arch-flow-label">Reflexion Loop</div>
+                <div class="arch-flow-meta">Gemini 2.5 Flash (LangChain) · Pure-Python Reflector</div>
+              </div>
+              <div class="arch-flow-arrow">→</div>
+              <div class="arch-flow-step">
+                <div class="arch-flow-icon">✍️</div>
+                <div class="arch-flow-label">Rewriter</div>
+                <div class="arch-flow-meta">Claude Sonnet 4.6 · Concurrent with Pass 2</div>
+              </div>
+              <div class="arch-flow-arrow">→</div>
+              <div class="arch-flow-step">
+                <div class="arch-flow-icon">💾</div>
+                <div class="arch-flow-label">SQLite + LangSmith</div>
+                <div class="arch-flow-meta">Tokens in DB · Full trace observability</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Business Impact panel -->
+      <div id="panel-impact" class="panel panel-impact">
+        <div class="panel-impact-inner">
+
+          <!-- Header -->
+          <div class="impact-page-header">
+            <div class="impact-page-title-row">
+              <div class="impact-icon">📈</div>
+              <h2 class="impact-page-title">Business Impact</h2>
+              <span class="impact-subtitle">Before vs After PDP Optimisation</span>
+              <span class="impact-sample-badge">Sample Data</span>
+            </div>
+          </div>
+
+          <!-- Disclaimer -->
+          <div class="impact-disclaimer">
+            <span style="font-size:14px;flex-shrink:0">⚠️</span>
+            <span>This section uses sample data to demonstrate how real analytics would be visualised. In production, connect your Google Analytics 4, Shopify, or internal BI tool to this endpoint.</span>
+          </div>
+
+          <!-- Product selector -->
+          <div class="impact-product-selector-row">
+            <span class="impact-selector-label">Product:</span>
+            <div id="product-selector" class="impact-product-btns"></div>
+          </div>
+
+          <!-- KPI summary cards -->
+          <div id="kpi-summary-cards" class="impact-kpi-grid"></div>
+
+          <!-- Audit score bar -->
+          <div id="audit-score-bar" class="impact-score-bar"></div>
+
+          <!-- 2×2 charts -->
+          <div class="impact-charts-grid">
+            <div id="chart-conversion" class="kpi-chart-card"></div>
+            <div id="chart-atc"        class="kpi-chart-card"></div>
+            <div id="chart-revenue"    class="kpi-chart-card"></div>
+            <div id="chart-bounce"     class="kpi-chart-card"></div>
+          </div>
+
+          <!-- Units sold full-width -->
+          <div id="chart-units" class="kpi-chart-card impact-chart-full"></div>
+
+          <!-- What changed -->
+          <div class="impact-what-changed">
+            <div id="recommendations-implemented" class="impact-change-card"></div>
+            <div id="compliance-resolved"         class="impact-change-card"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Trace Agent panel -->
+      <div id="panel-trace" class="panel panel-trace">
+        <div class="panel-trace-inner">
+          <div class="trace-panel-header">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="trace-agent-icon">LS</div>
+              <h2 style="margin:0;font-size:18px;color:#ffffff;">Observability Dashboard</h2>
+              <span style="color:var(--text-muted);font-size:13px;">· LangSmith Observability</span>
+            </div>
+            <a id="open-langsmith-link" href="https://smith.langchain.com" target="_blank" class="trace-modal-open-btn">Open LangSmith ↗</a>
+          </div>
+          <div id="trace-summary-cards" class="trace-summary-cards"></div>
+          <div class="trace-dashboard-tabs">
+            <button class="trace-dash-tab active-dash-tab" onclick="switchDashTab('overview')">Overview</button>
+            <button class="trace-dash-tab" onclick="switchDashTab('tokens')">Tokens & Cost</button>
+            <button class="trace-dash-tab" onclick="switchDashTab('steps')">LLM Calls</button>
+            <button class="trace-dash-tab" onclick="switchDashTab('traces')">Traces</button>
+          </div>
+          <div class="trace-tab-content">
+            <div id="dash-tab-overview" class="dash-panel">
+              <div class="trace-charts-row">
+                <div class="trace-chart-box"><div class="trace-chart-label">Latency Per Run (s)</div><canvas id="chart-latency"></canvas></div>
+                <div class="trace-chart-box"><div class="trace-chart-label">Tokens Per Run</div><canvas id="chart-tokens-run"></canvas></div>
+              </div>
+            </div>
+            <div id="dash-tab-tokens" class="dash-panel" style="display:none">
+              <div class="trace-charts-row">
+                <div class="trace-chart-box"><div class="trace-chart-label">Cost Per Run (USD)</div><canvas id="chart-cost"></canvas></div>
+                <div class="trace-chart-box"><div class="trace-chart-label">Prompt vs Completion Tokens</div><canvas id="chart-tokens-split"></canvas></div>
+              </div>
+            </div>
+            <div id="dash-tab-steps" class="dash-panel" style="display:none"><div id="steps-table"></div></div>
+            <div id="dash-tab-traces" class="dash-panel" style="display:none">
+              <div class="trace-split">
+                <div id="trace-runs-list" class="trace-runs-sidebar"></div>
+                <div id="trace-detail-panel" class="trace-detail-panel"><div class="trace-loading">Select a run to view its trace timeline</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+  <!-- Delete confirmation modal -->
+  <div id="delete-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-title">Delete audit?</div>
+      <div class="modal-body" id="delete-modal-body"></div>
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+        <button class="modal-btn-confirm" id="modal-confirm-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="/static/sample_kpi_data.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

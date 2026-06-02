@@ -1,0 +1,249 @@
+{% if reflection %}
+REFLECTION FROM PREVIOUS PASS (Pass {{ pass_number }}):
+{{ reflection }}
+
+Revise your audit below, specifically addressing each critique above. Do not simply repeat your previous output.
+---
+{% endif %}
+
+TARGET PAGE DATA:
+{{ target_json }}
+
+{% if layout_signals_json %}
+COMPUTED LAYOUT SIGNALS (extracted from rendered page via Playwright):
+Use these to evaluate benefit_hierarchy, dtc_benchmark/scannability, and dtc_benchmark/mobile_structure.
+Key fields:
+- benefit_section.display / columns: whether benefits use grid/flex and how many columns
+- benefit_section.icon_paired_with_heading: true = 3-part layout detected
+- benefit_section.highlight_count: number of distinct benefit highlights
+- benefit_section.avg_paragraph_chars: long = wall of text, short = scannable
+- nutrition.is_html_table / position_percent_down_page: table present and where on the page
+- nutrition.in_popup_or_modal: true = nutritional information is behind a popup/modal button — this is a PASS for semantic_grouping_of_details (spec data is fully separated from persuasive content)
+- gallery.nav_type: "thumbnails" or "dots"
+- main_layout.columns: 1 = mobile-friendly single column
+- review_trust_signals.star_filter_controls_found: interactive star-rating filter controls exist in the DOM
+- review_trust_signals.rating_breakdown_bars_found: 1★–5★ percentage breakdown bars present
+- review_trust_signals.verified_badge_found / verified_badge_text_samples: verified buyer badges detected and their text
+- review_trust_signals.low_star_reviews_visible: 1-star or 2-star review content is visible on the page (not suppressed)
+- review_trust_signals.review_card_count: number of individual review cards rendered in the DOM
+- review_trust_signals.rating_widget_position: "atf_or_near" or "below_fold" (aggregate star rating widget location)
+- catalog_differentiation.comparison_table_found: a multi-column product comparison table exists in the DOM
+- catalog_differentiation.variant_buttons_found / variant_names_found: button-style variant selectors and their labels
+- catalog_differentiation.variant_dropdowns_found: dropdown selectors (lower UX quality than buttons)
+- catalog_differentiation.compare_language_detected: "vs", "compare", "difference between" language present
+- catalog_differentiation.tab_labels: visible tab labels (may indicate hidden comparison content)
+
+For trust_signals/authenticity_and_negative_review_visibility:
+- pass: verified_badge_found=true AND (star_filter_controls_found=true OR rating_breakdown_bars_found=true) AND low_star_reviews_visible=true
+- partial: verified badges OR filter controls present but not both, OR low_star_reviews_visible=false (negative reviews may be suppressed)
+- fail: none of the above signals present
+
+For trust_signals/prominent_aggregate_ratings: use rating_widget_position to confirm ATF placement — "atf_or_near" confirms the rating is above or near the fold; "below_fold" or "not_found" downgrades the score.
+
+For product_positioning/internal_catalog_differentiation: if catalog_differentiation.comparison_table_found is true, score as pass. If variant_buttons_found but no comparison table, score as partial. If neither, score as fail (or N/A if variant_names_found is empty and the product appears to be single-SKU).
+{{ layout_signals_json }}
+{% endif %}
+
+{% if has_atf_screenshot %}
+ATF SCREENSHOT PROVIDED: A real mobile screenshot (390×844px, no scroll) is attached.
+
+CRITICAL RULES FOR ATF SCORING:
+- Score headline_clarity and dtc_benchmark/above_fold_completeness ONLY from what is physically visible in this screenshot.
+- A field existing in the structured data does NOT mean it is visible ATF. The price may be in the data but below the fold.
+- For each headline_clarity element check, look at the screenshot first. If you cannot see it in the screenshot, it is NOT present ATF.
+
+ATF CITATION FORMAT — this is mandatory:
+  For every element check in headline_clarity, your cited fact MUST describe what you
+  see in the screenshot, not what is in the structured data.
+  CORRECT: "fail — no pricing text visible in screenshot ATF"
+  CORRECT: "pass — cost-per-serving visible in screenshot below product title"
+  WRONG:   "pass — price '£29.99' present in structured data" ← flagged as false positive
+  WRONG:   "Cost-per-serving is missing, forcing users to calculate the value of the £50 product" ← never quote specific prices
+
+PRICE RULE — NON-NEGOTIABLE:
+  Never quote or reference any specific price value (e.g. £50, £29.99, £1.67/serving) in any
+  element check, score rationale, or recommendation. Only state whether cost-per-serving
+  is visible or not visible. The specific price is irrelevant to the audit findings.
+
+SPECIFIC ATF CHECKS:
+- price_visibility: FAIL unless a cost-per-serving figure is legible in the screenshot.
+  Do not quote the price value. State only "cost-per-serving visible" or "cost-per-serving missing".
+  The structured.price field WILL mislead you — ignore it for this check entirely.
+- prominent_cta: FAIL unless the Add to Basket / Buy Now button is physically visible in
+  the screenshot. cta_buttons in structured data does NOT confirm ATF placement.
+- outcome_sub_headline: FAIL unless a benefit-led sentence is visible below the H1 in
+  the screenshot. Product name or category label does not count.
+- per_serving_cost: FAIL unless a cost-per-serving figure is legible in the screenshot.
+  Do not infer it from price + serving count in structured data.
+{% else %}
+NOTE: No ATF screenshot available. Score headline_clarity and dtc_benchmark/above_fold_completeness from document order in the scraped data as a proxy. Flag every element check with [NO ATF SCREENSHOT — POSITION INFERRED FROM DOM ORDER].
+{% endif %}
+
+{% if has_images %}
+PRODUCT GALLERY IMAGES: Attached after the ATF screenshot. Use them to evaluate:
+- visual_gallery: angles, lifestyle shots, benefit messaging, alt text accuracy
+- dtc_benchmark/mobile_structure: thumbnail strip vs dot navigation
+{% else %}
+NOTE: No product gallery images loaded. Score visual_gallery and dtc_benchmark/mobile_structure from alt text signals only. Flag with [ALT TEXT ONLY - HUMAN VISUAL REVIEW REQUIRED].
+{% endif %}
+
+Audit the target page now against the rubric. Score all 9 dimensions.
+For dtc_benchmark, score each of the 4 sub-criteria separately; set dimension score to their mean (rounded).
+
+ELEMENT CHECK FORMAT: "pass/fail/partial — plain English description of what was found on this page."
+Example: "pass — H1 is 'Greens Powder', includes category keyword."
+Example: "fail — No sub-headline present ATF; product description begins below fold."
+Example: "partial — Star rating visible ATF but review count absent."
+Do NOT use [DATA:] or [VISUAL:] tags inside element_checks values — plain English only.
+
+No text outside the JSON object. No markdown fences.
+
+OUTPUT SCHEMA (use this exact structure):
+{
+  "page_audited": "URL of the page being audited",
+  "executive_summary": {
+    "overall_score": 0.0,
+    "score_interpretation": "one sentence interpreting the score",
+    "headline_finding": "the single most valuable improvement on this page",
+    "safe_to_action_count": 0,
+    "needs_signoff_count": 0,
+    "compliance_flags_count": 0
+  },
+  "dimension_scores": {
+    "headline_clarity": {
+      "score": 0, "weight": 15, "weighted_score": 0.0, "score_rationale": "",
+      "element_checks": {
+        "descriptive_h1": "pass/fail/partial — [cited fact]",
+        "outcome_sub_headline": "pass/fail/partial — [cited fact]",
+        "price_visibility": "pass/fail/partial — [cited fact]",
+        "visual_trust_anchors": "pass/fail/partial — [cited fact]",
+        "prominent_cta": "pass/fail/partial — [cited fact]"
+      }
+    },
+    "benefit_hierarchy": {
+      "score": 0, "weight": 15, "weighted_score": 0.0, "score_rationale": "",
+      "element_checks": {
+        "outcome_first_framing": "pass/fail/partial — [cited fact]",
+        "three_part_highlight_architecture": "pass/fail/partial — [cited fact]",
+        "highlight_count_discipline": "pass/fail/partial — [cited fact]",
+        "semantic_grouping_of_details": "pass/fail/partial — [cited fact]"
+      }
+    },
+    "product_positioning": {
+      "score": 0, "weight": 10, "weighted_score": 0.0, "score_rationale": "",
+      "element_checks": {
+        "target_identity_articulation": "pass/fail/partial — [cited fact]",
+        "consumption_occasion_definition": "pass/fail/partial — [cited fact]",
+        "problem_resolution_focus": "pass/fail/partial — [cited fact]",
+        "internal_catalog_differentiation": "pass/fail/partial/N/A — [cited fact]",
+        "proprietary_jargon_clarification": "pass/fail/partial — [cited fact]"
+      }
+    },
+    "objection_handling": {
+      "score": 0, "weight": 15, "weighted_score": 0.0, "score_rationale": "",
+      "element_checks": {
+        "price_and_hidden_costs": "pass/fail/partial — [cited fact]",
+        "taste_and_texture_reassurance": "pass/fail/partial — [cited fact]",
+        "subscription_flexibility_messaging": "pass/fail/partial — [cited fact]",
+        "efficacy_and_risk_reversal": "pass/fail/partial — [cited fact]",
+        "usage_and_technical_faq": "pass/fail/partial — [cited fact]",
+        "variant_selection_friction": "pass/fail/partial/N/A — [cited fact]"
+      }
+    },
+    "trust_signals": {
+      "score": 0, "weight": 15, "weighted_score": 0.0, "score_rationale": "",
+      "element_checks": {
+        "prominent_aggregate_ratings": "pass/fail/partial — [cited fact]",
+        "authenticity_and_negative_review_visibility": "pass/fail/partial — [cited fact]",
+        "independent_certifications": "pass/fail/partial — [cited fact]",
+        "batch_testing_transparency": "pass/fail/partial — [cited fact]",
+        "expert_and_authority_endorsements": "pass/fail/partial — [cited fact]"
+      }
+    },
+    "claims_compliance": {
+      "score": 0, "weight": 10, "weighted_score": 0.0, "score_rationale": "",
+      "element_checks": {
+        "medicinal_claims": "pass/fail/partial — [cited fact]",
+        "testimonial_loopholes": "pass/fail/partial — [cited fact]",
+        "nutrient_attribution_failures": "pass/fail/partial — [cited fact]",
+        "ghc_shc_adjacency_failures": "pass/fail/partial — [cited fact]",
+        "normal_phrasing_violations": "pass/fail/partial — [cited fact]",
+        "high_risk_buzzwords_and_novel_foods": "pass/fail/partial — [cited fact]"
+      }
+    },
+    "seo": {
+      "score": 0, "weight": 10, "weighted_score": 0.0, "score_rationale": "",
+      "element_checks": {
+        "metadata_and_url_structure": "pass/fail/partial — [cited fact]",
+        "header_hierarchy": "pass/fail/partial — [cited fact]",
+        "product_schema_and_merchant_listings": "pass/fail/partial — [cited fact]",
+        "aggregate_rating_schema_compliance": "pass/fail/partial — [cited fact]",
+        "breadcrumb_navigation": "pass/fail/partial — [cited fact]"
+      }
+    },
+    "visual_gallery": {
+      "score": 0, "weight": 5, "weighted_score": 0.0, "score_rationale": ""
+    },
+    "dtc_benchmark": {
+      "score": 0, "weight": 5, "weighted_score": 0.0, "score_rationale": "",
+      "sub_scores": {
+        "above_fold_completeness": 0,
+        "scannability": 0,
+        "mobile_structure": 0,
+        "page_performance": 0
+      },
+      "sub_rationale": {
+        "above_fold_completeness": "one sentence — what specific ATF elements are present or missing",
+        "scannability": "one sentence — wall of text vs structured layout evidence",
+        "mobile_structure": "one sentence — single column, thumbnail vs dot navigation evidence",
+        "page_performance": "one sentence — lazy loading, CDN, image dimensions evidence [REQUIRES LIGHTHOUSE TEST]"
+      }
+    }
+  },
+  "overall_score": 0.0,
+  "recommendations": [
+    {
+      "priority_rank": 1,
+      "dimension": "headline_clarity",
+      "triage": "NEEDS SIGN-OFF",
+      "finding": "one sentence — specific problem with evidence citation",
+      "evidence": "[DATA: field | 'value'] or [VISUAL: observation]",
+      "why_it_matters": "commercial rationale with specific data reference",
+      "before": "exact current text from the page",
+      "after": "specific suggested replacement",
+      "impact_score": 0,
+      "impact_rationale": "why this score",
+      "effort_score": 0,
+      "effort_rationale": "what implementation requires",
+      "compliance_flag": false,
+      "compliance_note": "",
+      "human_review_required": false,
+      "review_reason": ""
+    }
+  ],
+  "compliance_flags": [
+    {
+      "verbatim_quote": "exact sentence from page",
+      "source_field": "field name",
+      "risk_level": "High",
+      "risk_reason": "specific reason",
+      "suggested_compliant_alternative": "rewrite using authorised GB NHC Register phrasing or null",
+      "action": "⚠ COMPLIANCE FLAG — human review required against GB NHC Register"
+    }
+  ],
+  "triage": {
+    "safe_to_action": [
+      {"rank": 0, "title": "", "why_safe": ""}
+    ],
+    "needs_signoff": [
+      {"rank": 0, "title": "", "approver": "", "why": ""}
+    ]
+  }
+}
+
+RULES:
+- recommendations: minimum 7, maximum 12, ranked by priority formula: impact × 2 + (6 − effort)
+- overall_score: 0–5 scale. Compute as: sum(dim_score × dim_weight for all 9 dimensions) / 100. Example: if all 9 dimensions score 3, overall_score = (3×15 + 3×15 + 3×10 + 3×15 + 3×15 + 3×10 + 3×10 + 3×5 + 3×5) / 100 = 3.0
+- weighted_score per dimension: dim_score × dim_weight / 100 (also 0–5 scale)
+- Replace every 0, "", false, and [] with real values
+- Dimension names must exactly match: headline_clarity, benefit_hierarchy, product_positioning, objection_handling, trust_signals, claims_compliance, seo, visual_gallery, dtc_benchmark
